@@ -16,6 +16,9 @@ namespace FileSearch
         public Form1()
         {
             InitializeComponent();
+            listView1.View = View.Details;
+            listView1.Columns.Add("Status", -2, HorizontalAlignment.Left);
+            listView1.Columns.Add("Time Taken", -2, HorizontalAlignment.Left);
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -23,16 +26,21 @@ namespace FileSearch
 
         }
 
+        // function to upload files
         private void btnUpload_Click(object sender, EventArgs e)
         {
+            // open file dialog
             OpenFileDialog ofd = new OpenFileDialog();
             {
+                // allow multiple file selection
                 ofd.Multiselect = true;
+                // show only text files
                 ofd.Filter = "Text Files(*.txt)|*.txt|All Files(*.*)|*.*";
             };
-
+          
             if (ofd.ShowDialog() == DialogResult.OK)
             {
+                // add selected files to the list
                 foreach (var filePath in ofd.FileNames)
                 {
                     if (!lstFiles.Items.Contains(filePath))
@@ -43,64 +51,69 @@ namespace FileSearch
             }
         }
 
-        private void btnSearch_Click(object sender, EventArgs e)
+        // function for click search button
+        private async void btnSearch_Click(object sender, EventArgs e)
         {
+            // check if list is empty
             if (lstFiles.Items.Count == 0)
             {
                 MessageBox.Show("No files to search", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
+            // check if keyword is empty
             if (string.IsNullOrWhiteSpace(textKeyword.Text))
             {
                 MessageBox.Show("Please enter a keyword to search", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            string[] filePaths = new string[lstFiles.Items.Count];
-            lstFiles.Items.CopyTo(filePaths, 0);
+            // convert items in a listBox to an array of strings
+            // Cast is a LINQ method used to convert each item in the list to a string
+            // ToArray is a method used to convert the resulting collection to an array
+            string[] filePaths = lstFiles.Items.Cast<string>().ToArray();
 
+            // use IProgress to update the progress panel
             IProgress<string> progress = new Progress<string>(status => lblStatus.Text = status);
-            _ = SearchFilesAsync(filePaths, textKeyword.Text, progress);
+            // start the search
+            await StartFileSearchAsync(filePaths, textKeyword.Text, progress);
         }
 
-        private async Task SearchFilesAsync(string[] filePaths, string keyword, IProgress<string> progress)
+        private async Task StartFileSearchAsync(string[] filePaths, string keyword, IProgress<string> progress)
         {
+            listView1.Items.Clear();
             ClearFields();
-            lblStatus.Text = "Starting search...";  // Initial status
+            lblStatus.Text = "Starting search...";
 
-            await fileSearchTool.SearchFilesAsync(filePaths, keyword, new Progress<string>(async status =>
+            var progressHandler = new Progress<(string status, TimeSpan timeTaken)>(data =>
             {
-                string[] parts = status.Split(", ");
-                if (parts.Length == 2 && parts[0].StartsWith("Processed"))
-                {
-                    string filePath = Path.GetFullPath(parts[0].Split(':')[1].Trim());
-                }
+                // Add progress details to the panel
+                AddToProgressList(data.status, data.timeTaken);
+            });
 
-                // Update the status during the search
-                if (lblStatus.InvokeRequired)
-                {
-                    lblStatus.Invoke(new Action(() => lblStatus.Text = status));
-                }
-                else
-                {
-                    lblStatus.Text = status;
-                }
-
-                await Task.Delay(50000);
-            }));
+            // call fileSearchTool.SearchKeywordInFilesAsync in a separate task to avoid blocking the UI
+            await Task.Run(() => fileSearchTool.SearchKeywordInFilesAsync(filePaths, keyword, progressHandler));
 
             // After all tasks are completed, update the final status
-            var results = fileSearchTool.GetResults().Sum(result => result.MatchCount);
+            var  results = fileSearchTool.GetResults().Sum(result => result.MatchCount);
             lblStatus.Text = $"Completed. Total matches: {results}";
+
+            
         }
 
-        
+        private void AddToProgressList(string message, TimeSpan timeTaken)
+        {
+            //listView1.Items.Clear();
+
+            ListViewItem item = new ListViewItem(message);
+            item.SubItems.Add(timeTaken.TotalMilliseconds.ToString());
+            listView1.Items.Add(item);
+            listView1.Refresh();
+        }
 
         private void ClearFields()
         {
             lstFiles.Items.Clear();
-            progressPanel.Controls.Clear();
             fileSearchTool.GetResults().Clear();
             textKeyword.Text = "";
             lblStatus.Text = "";

@@ -1,0 +1,142 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace FileSearch
+{
+    public partial class Form1 : Form
+    {
+        internal FileSearchTool fileSearchTool = new FileSearchTool();
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnUpload_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            {
+                ofd.Multiselect = true;
+                ofd.Filter = "Text Files(*.txt)|*.txt|All Files(*.*)|*.*";
+            };
+
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                foreach (var filePath in ofd.FileNames)
+                {
+                    if (!lstFiles.Items.Contains(filePath))
+                    {
+                        lstFiles.Items.Add(filePath);
+                    }
+                }
+            }
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            if (lstFiles.Items.Count == 0)
+            {
+                MessageBox.Show("No files to search", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(textKeyword.Text))
+            {
+                MessageBox.Show("Please enter a keyword to search", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string[] filePaths = lstFiles.Items.Cast<string>().ToArray();
+
+            IProgress<string> progress = new Progress<string>(status => lblStatus.Text = status);
+            _ = SearchFilesAsync(filePaths, textKeyword.Text, progress);
+        }
+
+        private async Task SearchFilesAsync(string[] filePaths, string keyword, IProgress<string> progress)
+        {
+            ClearFields();
+            lblStatus.Text = "Starting search...";
+            progressPanel.Controls.Clear();
+
+            // A list to hold progress updates temporarily
+            var progressUpdates = new ConcurrentBag<(string status, TimeSpan timeTaken)>();
+            var progressHandler = new Progress<(string status, TimeSpan timeTaken)>(data =>
+            {
+                progressUpdates.Add(data);
+            });
+
+            // Start periodic UI updates
+            var updateTask = Task.Run(async () =>
+            {
+                while (!fileSearchTool.cts.Token.IsCancellationRequested)
+                {
+                    if (!progressUpdates.IsEmpty)
+                    {
+                        foreach (var update in progressUpdates)
+                        {
+                            AddToProgressPanel(update.status, update.timeTaken);
+                        }
+                        progressUpdates.Clear();
+                    }
+                    await Task.Delay(100); // Flush updates every 100ms
+                }
+            });
+
+            // Execute search
+            try
+            {
+                await fileSearchTool.SearchFilesAsync(filePaths, keyword, progressHandler);
+            }
+            finally
+            {
+                fileSearchTool.cts.Cancel(); // Stop the periodic updates
+                await updateTask; // Ensure the update task completes
+            }
+
+            // Update the final status
+            var results = fileSearchTool.GetResults().Sum(result => result.MatchCount);
+            lblStatus.Text = $"Completed. Total matches: {results}";
+        }
+
+        private void AddToProgressPanel(string message, TimeSpan timeTaken)
+        {
+            var label = new Label
+            {
+                Text = $"{message}, Time: {timeTaken.TotalMilliseconds}ms",
+                AutoSize = true,
+                Margin = new Padding(5),
+                ForeColor = Color.Black // Customize color as needed
+            };
+
+            if (progressPanel.InvokeRequired)
+            {
+                progressPanel.Invoke(new Action(() => progressPanel.Controls.Add(label)));
+            }
+            else
+            {
+                progressPanel.Controls.Add(label);
+            }
+        }
+
+        private void ClearFields()
+        {
+            lstFiles.Items.Clear();
+            progressPanel.Controls.Clear();
+            fileSearchTool.GetResults().Clear();
+            textKeyword.Text = "";
+            lblStatus.Text = "";
+        }
+    }
+}

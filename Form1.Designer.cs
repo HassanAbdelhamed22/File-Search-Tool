@@ -32,9 +32,9 @@
             textKeyword = new TextBox();
             btnSearch = new Button();
             btnUpload = new Button();
-            progressPanel = new Panel();
             lstFiles = new ListBox();
             lblStatus = new Label();
+            listView1 = new ListView();
             SuspendLayout();
             // 
             // label1
@@ -74,20 +74,12 @@
             btnUpload.UseVisualStyleBackColor = true;
             btnUpload.Click += btnUpload_Click;
             // 
-            // progressPanel
-            // 
-            progressPanel.AutoScroll = true;
-            progressPanel.Location = new Point(12, 173);
-            progressPanel.Name = "progressPanel";
-            progressPanel.Size = new Size(444, 173);
-            progressPanel.TabIndex = 4;
-            // 
             // lstFiles
             // 
             lstFiles.FormattingEnabled = true;
             lstFiles.Location = new Point(12, 21);
             lstFiles.Name = "lstFiles";
-            lstFiles.Size = new Size(150, 64);
+            lstFiles.Size = new Size(316, 64);
             lstFiles.TabIndex = 5;
             // 
             // lblStatus
@@ -98,14 +90,22 @@
             lblStatus.Size = new Size(0, 20);
             lblStatus.TabIndex = 6;
             // 
+            // listView1
+            // 
+            listView1.Location = new Point(12, 184);
+            listView1.Name = "listView1";
+            listView1.Size = new Size(444, 121);
+            listView1.TabIndex = 7;
+            listView1.UseCompatibleStateImageBehavior = false;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(800, 436);
+            Controls.Add(listView1);
             Controls.Add(lblStatus);
             Controls.Add(lstFiles);
-            Controls.Add(progressPanel);
             Controls.Add(btnUpload);
             Controls.Add(btnSearch);
             Controls.Add(textKeyword);
@@ -122,8 +122,8 @@
         private TextBox textKeyword;
         private Button btnSearch;
         private Button btnUpload;
-        private Panel progressPanel;
         private ListBox lstFiles;
         private Label lblStatus;
+        private ListView listView1;
     }
 }
