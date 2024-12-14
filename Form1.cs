@@ -12,18 +12,32 @@ namespace FileSearch
 {
     public partial class Form1 : Form
     {
+        // create a file search tool
         internal FileSearchTool fileSearchTool = new FileSearchTool();
+
         public Form1()
         {
             InitializeComponent();
             listView1.View = View.Details;
-            listView1.Columns.Add("Status", -2, HorizontalAlignment.Left);
-            listView1.Columns.Add("Time Taken", -2, HorizontalAlignment.Left);
+            listView1.Columns.Add("Status", 190, HorizontalAlignment.Left);
+            listView1.Columns.Add("Time Taken", 140, HorizontalAlignment.Center);
+            listView1.Columns.Add("Progress", 140, HorizontalAlignment.Center); 
         }
 
-        private void label1_Click(object sender, EventArgs e)
+        private void Button_MouseEnter(object sender, EventArgs e)
         {
+            if (sender is Button button)
+            {
+                button.BackColor = Color.DarkGray;
+            }
+        }
 
+        private void Button_MouseLeave(object sender, EventArgs e)
+        {
+            if (sender is Button button)
+            {
+                button.BackColor = Color.Snow;
+            }
         }
 
         // function to upload files
@@ -37,7 +51,7 @@ namespace FileSearch
                 // show only text files
                 ofd.Filter = "Text Files(*.txt)|*.txt|All Files(*.*)|*.*";
             };
-          
+
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 // add selected files to the list
@@ -79,36 +93,82 @@ namespace FileSearch
             await StartFileSearchAsync(filePaths, textKeyword.Text, progress);
         }
 
+        // function to start the search
         private async Task StartFileSearchAsync(string[] filePaths, string keyword, IProgress<string> progress)
         {
             listView1.Items.Clear();
             ClearFields();
-            lblStatus.Text = "Starting search...";
+            lblStatus.Text = "Searching in Progress...";
 
-            var progressHandler = new Progress<(string status, TimeSpan timeTaken)>(data =>
-            {
-                // Add progress details to the panel
-                AddToProgressList(data.status, data.timeTaken);
-            });
+            await Task.Delay(1000);
 
-            // call fileSearchTool.SearchKeywordInFilesAsync in a separate task to avoid blocking the UI
-            await Task.Run(() => fileSearchTool.SearchKeywordInFilesAsync(filePaths, keyword, progressHandler));
+            // create a progress handler
+            var progressHandler = CreateProgressHandler();
+            var progressBarHandler = new Progress<int>(progressPercentage => progressBar.Value = progressPercentage);
 
-            // After all tasks are completed, update the final status
-            var  results = fileSearchTool.GetResults().Sum(result => result.MatchCount);
-            lblStatus.Text = $"Completed. Total matches: {results}";
+            // start the search
+            await Task.Run(() => fileSearchTool.SearchKeywordInFilesAsync(filePaths, keyword, progressHandler, progressBarHandler));
 
-            
+            // update the final status
+            UpdateFinalStatus(fileSearchTool, progressBarHandler);
         }
 
-        private void AddToProgressList(string message, TimeSpan timeTaken)
+        // function to create a progress handler
+        private Progress<(string status, TimeSpan timeTaken, int progressPercentage)> CreateProgressHandler()
         {
-            //listView1.Items.Clear();
+            // create a progress handler
+            return new Progress<(string status, TimeSpan timeTaken, int progressPercentage)>(data =>
+            {
+                // update the list view
+                var item = listView1.Items.Cast<ListViewItem>().FirstOrDefault(i => i.Text.StartsWith(data.status.Split(',')[0]));
+                if (item != null)
+                {
+                    // update the item
+                    var matchCount = int.Parse(data.status.Split(',')[1].Split(':')[1]);
+                    item.SubItems[0].Text = $"{data.status.Split(',')[0]}, Match count: {matchCount}";
+                    item.SubItems[2].Text = data.progressPercentage.ToString() + "%";
+                }
+                // add a new item
+                else
+                {
+                    AddNewItemToListView(data);
+                }
+                // refresh the list view
+                listView1.Refresh();
+            });
+        }
 
-            ListViewItem item = new ListViewItem(message);
-            item.SubItems.Add(timeTaken.TotalMilliseconds.ToString());
+        // function to add a new item to the list view
+        private void AddNewItemToListView((string status, TimeSpan timeTaken, int progressPercentage) data)
+        {
+            // add a new item
+            var item = new ListViewItem(data.status);
+            item.SubItems.Add(data.timeTaken.TotalMilliseconds.ToString());
+            item.SubItems.Add(data.progressPercentage.ToString() + "%");
+            // add a progress bar
+            var progressBarControl = new ProgressBar
+            {
+                Value = data.progressPercentage,
+                Width = 100
+            };
+            // add a tag
+            item.SubItems.Add(new ListViewItem.ListViewSubItem(item, progressBarControl.ToString())
+            {
+                Tag = progressBarControl
+            });
             listView1.Items.Add(item);
-            listView1.Refresh();
+        }
+
+        // function to update the final status
+        private void UpdateFinalStatus(FileSearchTool fileSearchTool, IProgress<int> progressBarHandler)
+        {
+            // Get the total number of matches
+            var results = fileSearchTool.GetResults().Sum(result => result.MatchCount);
+            // Ensure the progress bar is set to 100
+            progressBarHandler.Report(100);
+            // update the final status
+            lblStatus.Text = "Search completed!, " + results + " matches found.";
+            labelThread.Text = $" Total threads used: {fileSearchTool.GetThreadCount()}";
         }
 
         private void ClearFields()
@@ -116,7 +176,6 @@ namespace FileSearch
             lstFiles.Items.Clear();
             fileSearchTool.GetResults().Clear();
             textKeyword.Text = "";
-            lblStatus.Text = "";
         }
     }
 }

@@ -35,74 +35,102 @@
             lstFiles = new ListBox();
             lblStatus = new Label();
             listView1 = new ListView();
+            progressBar = new ProgressBar();
+            labelThread = new Label();
             SuspendLayout();
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(12, 112);
+            label1.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label1.Location = new Point(23, 180);
             label1.Name = "label1";
-            label1.Size = new Size(70, 20);
+            label1.Size = new Size(89, 25);
             label1.TabIndex = 0;
             label1.Text = "Keyword:";
-            label1.Click += label1_Click;
             // 
             // textKeyword
             // 
-            textKeyword.Location = new Point(99, 109);
+            textKeyword.Location = new Point(109, 181);
             textKeyword.Name = "textKeyword";
-            textKeyword.Size = new Size(125, 27);
+            textKeyword.Size = new Size(164, 27);
             textKeyword.TabIndex = 1;
             // 
             // btnSearch
             // 
-            btnSearch.Location = new Point(348, 109);
+            btnSearch.BackColor = Color.Snow;
+            btnSearch.Location = new Point(331, 169);
             btnSearch.Name = "btnSearch";
-            btnSearch.Size = new Size(108, 29);
+            btnSearch.Size = new Size(107, 51);
             btnSearch.TabIndex = 2;
             btnSearch.Text = "Start Search";
-            btnSearch.UseVisualStyleBackColor = true;
+            btnSearch.UseVisualStyleBackColor = false;
             btnSearch.Click += btnSearch_Click;
+            btnSearch.MouseEnter += Button_MouseEnter;
+            btnSearch.MouseLeave += Button_MouseLeave;
             // 
             // btnUpload
             // 
-            btnUpload.Location = new Point(348, 36);
+            btnUpload.BackColor = Color.Snow;
+            btnUpload.ForeColor = SystemColors.ControlText;
+            btnUpload.Location = new Point(444, 66);
             btnUpload.Name = "btnUpload";
-            btnUpload.Size = new Size(108, 29);
+            btnUpload.Size = new Size(107, 51);
             btnUpload.TabIndex = 3;
             btnUpload.Text = "Upload Files";
-            btnUpload.UseVisualStyleBackColor = true;
+            btnUpload.UseVisualStyleBackColor = false;
             btnUpload.Click += btnUpload_Click;
+            btnUpload.MouseEnter += Button_MouseEnter;
+            btnUpload.MouseLeave += Button_MouseLeave;
             // 
             // lstFiles
             // 
             lstFiles.FormattingEnabled = true;
-            lstFiles.Location = new Point(12, 21);
+            lstFiles.Location = new Point(23, 26);
             lstFiles.Name = "lstFiles";
-            lstFiles.Size = new Size(316, 64);
+            lstFiles.Size = new Size(415, 124);
             lstFiles.TabIndex = 5;
             // 
             // lblStatus
             // 
             lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(12, 393);
+            lblStatus.Location = new Point(23, 544);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new Size(0, 20);
             lblStatus.TabIndex = 6;
             // 
             // listView1
             // 
-            listView1.Location = new Point(12, 184);
+            listView1.Location = new Point(23, 241);
             listView1.Name = "listView1";
-            listView1.Size = new Size(444, 121);
+            listView1.Size = new Size(673, 287);
             listView1.TabIndex = 7;
             listView1.UseCompatibleStateImageBehavior = false;
+            // 
+            // progressBar
+            // 
+            progressBar.Location = new Point(560, 255);
+            progressBar.Margin = new Padding(3, 4, 3, 4);
+            progressBar.Name = "progressBar";
+            progressBar.Size = new Size(114, 31);
+            progressBar.TabIndex = 8;
+            // 
+            // labelThread
+            // 
+            labelThread.AutoSize = true;
+            labelThread.Location = new Point(23, 575);
+            labelThread.Name = "labelThread";
+            labelThread.Size = new Size(0, 20);
+            labelThread.TabIndex = 9;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 436);
+            BackColor = Color.SlateGray;
+            ClientSize = new Size(821, 615);
+            Controls.Add(labelThread);
+            Controls.Add(progressBar);
             Controls.Add(listView1);
             Controls.Add(lblStatus);
             Controls.Add(lstFiles);
@@ -111,7 +139,10 @@
             Controls.Add(textKeyword);
             Controls.Add(label1);
             Name = "Form1";
-            Text = "Form1";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "FileSearcher";
+            MouseEnter += Button_MouseEnter;
+            MouseLeave += Button_MouseLeave;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -125,5 +156,7 @@
         private ListBox lstFiles;
         private Label lblStatus;
         private ListView listView1;
+        private ProgressBar progressBar;
+        private Label labelThread;
     }
 }

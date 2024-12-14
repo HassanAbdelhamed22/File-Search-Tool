@@ -8,10 +8,16 @@ namespace FileSearch
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            Thread guiThread = new Thread(() =>
+            {
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new Form1());
+            });
+            guiThread.SetApartmentState(ApartmentState.STA);
+            guiThread.Start();
+            // Optionally wait for the GUI thread to finish
+            guiThread.Join();
         }
     }
 }
