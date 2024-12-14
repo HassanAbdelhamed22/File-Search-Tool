@@ -104,13 +104,12 @@ namespace FileSearch
 
             // create a progress handler
             var progressHandler = CreateProgressHandler();
-            var progressBarHandler = new Progress<int>(progressPercentage => progressBar.Value = progressPercentage);
 
             // start the search
-            await Task.Run(() => fileSearchTool.SearchKeywordInFilesAsync(filePaths, keyword, progressHandler, progressBarHandler));
+            await Task.Run(() => fileSearchTool.SearchKeywordInFilesAsync(filePaths, keyword, progressHandler));
 
             // update the final status
-            UpdateFinalStatus(fileSearchTool, progressBarHandler);
+            UpdateFinalStatus(fileSearchTool);
         }
 
         // function to create a progress handler
@@ -145,28 +144,14 @@ namespace FileSearch
             var item = new ListViewItem(data.status);
             item.SubItems.Add(data.timeTaken.TotalMilliseconds.ToString());
             item.SubItems.Add(data.progressPercentage.ToString() + "%");
-            // add a progress bar
-            var progressBarControl = new ProgressBar
-            {
-                Value = data.progressPercentage,
-                Width = 100
-            };
-            // add a tag
-            item.SubItems.Add(new ListViewItem.ListViewSubItem(item, progressBarControl.ToString())
-            {
-                Tag = progressBarControl
-            });
             listView1.Items.Add(item);
         }
 
         // function to update the final status
-        private void UpdateFinalStatus(FileSearchTool fileSearchTool, IProgress<int> progressBarHandler)
+        private void UpdateFinalStatus(FileSearchTool fileSearchTool)
         {
             // Get the total number of matches
             var results = fileSearchTool.GetResults().Sum(result => result.MatchCount);
-            // Ensure the progress bar is set to 100
-            progressBarHandler.Report(100);
-            // update the final status
             lblStatus.Text = "Search completed!, " + results + " matches found.";
             labelThread.Text = $" Total threads used: {fileSearchTool.GetThreadCount()}";
         }

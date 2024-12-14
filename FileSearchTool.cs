@@ -28,13 +28,10 @@ namespace FileSearch
 
 
         // function to search a keyword in a file
-        public void SearchKeywordInFile(string filePath, string keyword, IProgress<(string, TimeSpan, int)> progress, CancellationToken token, IProgress<int> progressBarHandler, int totalFiles, int currentFile)
+        public void SearchKeywordInFile(string filePath, string keyword, IProgress<(string, TimeSpan, int)> progress, CancellationToken token, int totalFiles, int currentFile)
         {
             // Record the current thread ID
             threadIds.Add(Thread.CurrentThread.ManagedThreadId);
-
-            // Reset progress bar at the start of processing each file
-            progressBarHandler.Report(0);
 
             int matchCount = 0;
             int totalLines = 0;
@@ -60,7 +57,7 @@ namespace FileSearch
 
                 // Report progress for each file
                 int progressPercentage = (int)(((double)totalLines / File.ReadLines(filePath).Count()) * 100);
-                ReportProgress(filePath, matchCount, stopwatch.Elapsed, progressPercentage, progress, progressBarHandler);
+                ReportProgress(filePath, matchCount, stopwatch.Elapsed, progressPercentage, progress);
             }
 
             stopwatch.Stop();
@@ -76,9 +73,6 @@ namespace FileSearch
             }
 
             progress.Report(($"{GetFileName(filePath)}, Match count: {matchCount}", stopwatch.Elapsed, 100));
-
-            // Report the progress for the progress bar
-            progressBarHandler.Report(100);
         }
 
         // function to report progress
@@ -87,15 +81,13 @@ namespace FileSearch
             int matchCount,
             TimeSpan elapsed,
             int progressPercentage,
-            IProgress<(string, TimeSpan, int)> progress,
-            IProgress<int> progressBarHandler)
+            IProgress<(string, TimeSpan, int)> progress)
         {
             progress.Report(($"{GetFileName(filePath)}, Match count: {matchCount}", elapsed, progressPercentage));
-            progressBarHandler.Report(progressPercentage);
         }
 
         // asynchronous function to handle the search in multiple files in parallel
-        public async Task SearchKeywordInFilesAsync(string[] filePaths, string keyword, IProgress<(string, TimeSpan, int)> progress, IProgress<int> progressBarHandler)
+        public async Task SearchKeywordInFilesAsync(string[] filePaths, string keyword, IProgress<(string, TimeSpan, int)> progress)
         {
             var token = cts.Token;
             int totalFiles = filePaths.Length;
@@ -106,7 +98,7 @@ namespace FileSearch
                 // Check cancellation token in each task
                 if (token.IsCancellationRequested)
                     return; // Stop if cancellation requeste
-                SearchKeywordInFile(file, keyword, progress, token, progressBarHandler, totalFiles, index);
+                SearchKeywordInFile(file, keyword, progress, token, totalFiles, index);
             }, token));
 
             try

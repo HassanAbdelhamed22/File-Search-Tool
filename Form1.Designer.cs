@@ -35,7 +35,6 @@
             lstFiles = new ListBox();
             lblStatus = new Label();
             listView1 = new ListView();
-            progressBar = new ProgressBar();
             labelThread = new Label();
             SuspendLayout();
             // 
@@ -107,14 +106,6 @@
             listView1.TabIndex = 7;
             listView1.UseCompatibleStateImageBehavior = false;
             // 
-            // progressBar
-            // 
-            progressBar.Location = new Point(560, 255);
-            progressBar.Margin = new Padding(3, 4, 3, 4);
-            progressBar.Name = "progressBar";
-            progressBar.Size = new Size(114, 31);
-            progressBar.TabIndex = 8;
-            // 
             // labelThread
             // 
             labelThread.AutoSize = true;
@@ -130,7 +121,6 @@
             BackColor = Color.SlateGray;
             ClientSize = new Size(821, 615);
             Controls.Add(labelThread);
-            Controls.Add(progressBar);
             Controls.Add(listView1);
             Controls.Add(lblStatus);
             Controls.Add(lstFiles);
@@ -156,7 +146,6 @@
         private ListBox lstFiles;
         private Label lblStatus;
         private ListView listView1;
-        private ProgressBar progressBar;
         private Label labelThread;
     }
 }
