@@ -15,9 +15,9 @@ namespace FileSearch
                 Application.Run(new Form1());
             });
             guiThread.SetApartmentState(ApartmentState.STA);
+
             guiThread.Start();
-            // Optionally wait for the GUI thread to finish
-            guiThread.Join();
+            ;
         }
     }
 }

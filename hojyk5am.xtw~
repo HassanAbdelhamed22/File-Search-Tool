@@ -110,10 +110,8 @@ namespace FileSearch
             try
             {
                 // start the search process on a background thread to prevent blocking the UI thread
-                await Task.Run(async () =>
-                {
-                    await fileSearchTool.SearchKeywordInFilesAsync(filePaths, keyword, progressHandler);
-                });
+                await Task.Run(() => fileSearchTool.SearchKeywordInFilesAsync(filePaths, keyword, progressHandler))
+                  .ConfigureAwait(true);
             }
             catch (Exception ex)
             {

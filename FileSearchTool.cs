@@ -13,9 +13,6 @@ namespace FileSearch
         // store results in a concurrent bag (a thread-safe collection)
         private ConcurrentBag<SearchResult> results = new();
 
-        // create a CancellationTokenSource
-        private CancellationTokenSource cts = new CancellationTokenSource();
-
         // create a ConcurrentBag to store the thread IDs
         private ConcurrentBag<int> threadIds = new();
 
@@ -28,7 +25,7 @@ namespace FileSearch
 
 
         // function to search a keyword in a file
-        public void SearchKeywordInFile(string filePath, string keyword, IProgress<(string, TimeSpan, int)> progress, CancellationToken token, int totalFiles, int currentFile)
+        public void SearchKeywordInFile(string filePath, string keyword, IProgress<(string, TimeSpan, int)> progress)
         {
             // Record the current thread ID
             threadIds.Add(Thread.CurrentThread.ManagedThreadId);
@@ -42,11 +39,6 @@ namespace FileSearch
             // serach in the file line by line
             foreach (var line in File.ReadLines(filePath))
             {
-                if (token.IsCancellationRequested)
-                {
-                    throw new OperationCanceledException();
-                }
-
                 totalLines++;
 
                 // check if the keword in the line and increament the matchCount
@@ -89,32 +81,25 @@ namespace FileSearch
         // asynchronous function to handle the search in multiple files in parallel
         public async Task SearchKeywordInFilesAsync(string[] filePaths, string keyword, IProgress<(string, TimeSpan, int)> progress)
         {
-            var token = cts.Token;
             int totalFiles = filePaths.Length;
 
             // create a task (thread) for each file and run the SearchFile function
             var tasks = filePaths.Select((file, index) => Task.Run(() =>
             {
-                // Check cancellation token in each task
-                if (token.IsCancellationRequested)
-                    return; // Stop if cancellation requeste
-                SearchKeywordInFile(file, keyword, progress, token, totalFiles, index);
-            }, token));
+                SearchKeywordInFile(file, keyword, progress);
+            }));
 
             try
             {
                 // wait for all tasks to complete
-                await Task.WhenAll(tasks);
+                await Task.WhenAll(tasks).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
+            catch (Exception ex)
             {
-
-                progress.Report(("Search canceled", TimeSpan.Zero, 0)); // Report cancellation with 0 progress
+                // Handle the exception, e.g., log the error, display an error message, etc.
+                Console.WriteLine("An error occurred during the search: " + ex.Message);
             }
         }
-
-        // Method to cancel the search
-        public void CancelSearch() => cts.Cancel();
 
         // collect the results from all threads and return them
         public ConcurrentBag<SearchResult> GetResults() => results;
